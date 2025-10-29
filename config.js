@@ -1,0 +1,8 @@
+module.exports = {
+    token: process.env.DISCORD_TOKEN,
+    clientId: process.env.CLIENT_ID,
+    guildId: process.env.GUILD_ID,
+    prefix: '!',
+    maxQueueSize: 100,
+    defaultVolume: 0.5
+};
