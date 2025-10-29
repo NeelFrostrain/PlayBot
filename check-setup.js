@@ -94,7 +94,10 @@ async function checkSetup() {
 
 function checkYtDlp() {
   return new Promise((resolve) => {
-    const process = spawn("yt-dlp", ["--version"], { shell: true });
+    const process = spawn("yt-dlp", ["--version"], { 
+      shell: false,
+      stdio: 'pipe'
+    });
     process.on("close", (code) => {
       resolve(code === 0);
     });

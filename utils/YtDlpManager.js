@@ -16,7 +16,10 @@ class YtDlpManager {
     // Check if yt-dlp is available
     async checkYtDlp() {
         return new Promise((resolve) => {
-            const process = spawn('yt-dlp', ['--version'], { shell: true });
+            const process = spawn('yt-dlp', ['--version'], { 
+                shell: false,
+                stdio: 'pipe'
+            });
             process.on('close', (code) => {
                 resolve(code === 0);
             });
@@ -35,7 +38,10 @@ class YtDlpManager {
                 url
             ];
 
-            const process = spawn('yt-dlp', args, { shell: true });
+            const process = spawn('yt-dlp', args, { 
+                shell: false,
+                stdio: 'pipe'
+            });
             let output = '';
             let error = '';
 
@@ -91,7 +97,10 @@ class YtDlpManager {
                 url
             ];
 
-            const process = spawn('yt-dlp', args, { shell: true });
+            const process = spawn('yt-dlp', args, { 
+                shell: false,
+                stdio: 'pipe'
+            });
             let error = '';
 
             process.stderr.on('data', (data) => {
@@ -126,7 +135,10 @@ class YtDlpManager {
                 `ytsearch${limit}:${query}`
             ];
 
-            const process = spawn('yt-dlp', args, { shell: true });
+            const process = spawn('yt-dlp', args, { 
+                shell: false,
+                stdio: 'pipe'
+            });
             let output = '';
             let error = '';
 
@@ -174,7 +186,10 @@ class YtDlpManager {
                 url
             ];
 
-            const process = spawn('yt-dlp', args, { shell: true });
+            const process = spawn('yt-dlp', args, { 
+                shell: false,
+                stdio: 'pipe'
+            });
             let output = '';
             let error = '';
 
@@ -231,7 +246,10 @@ class YtDlpManager {
                 url
             ];
 
-            const process = spawn('yt-dlp', args, { shell: true });
+            const process = spawn('yt-dlp', args, { 
+                shell: false,
+                stdio: 'pipe'
+            });
             let error = '';
 
             process.stderr.on('data', (data) => {

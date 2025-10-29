@@ -61,16 +61,27 @@ client.on("interactionCreate", async (interaction) => {
       await command.execute(interaction);
     } catch (error) {
       console.error(error);
-      if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({
-          content: "There was an error while executing this command!",
-          ephemeral: true,
-        });
-      } else {
-        await interaction.reply({
-          content: "There was an error while executing this command!",
-          ephemeral: true,
-        });
+      
+      // Handle "Unknown interaction" errors gracefully
+      if (error.code === 10062) {
+        console.log('Interaction token expired, ignoring...');
+        return;
+      }
+      
+      try {
+        if (interaction.replied || interaction.deferred) {
+          await interaction.followUp({
+            content: "There was an error while executing this command!",
+            flags: 64, // Use flags instead of ephemeral
+          });
+        } else {
+          await interaction.reply({
+            content: "There was an error while executing this command!",
+            flags: 64, // Use flags instead of ephemeral
+          });
+        }
+      } catch (followUpError) {
+        console.error('Failed to send error message:', followUpError);
       }
     }
   } else if (interaction.isButton()) {
@@ -81,37 +92,58 @@ client.on("interactionCreate", async (interaction) => {
       if (!queue) {
         return interaction.reply({
           content: "No active music session!",
-          ephemeral: true,
-        });
+          flags: 64, // Use flags instead of ephemeral
+        }).catch(console.error);
       }
 
-      if (interaction.customId.startsWith("queue_prev_")) {
-        const currentPage = parseInt(interaction.customId.split("_")[2]);
-        const newPage = Math.max(1, currentPage - 1);
+      try {
+        if (interaction.customId.startsWith("queue_prev_")) {
+          const currentPage = parseInt(interaction.customId.split("_")[2]);
+          const newPage = Math.max(1, currentPage - 1);
 
-        // Re-run queue command with new page
-        const queueCommand = interaction.client.commands.get("queue");
-        interaction.options = {
-          getInteger: (optionName) => (optionName === "page" ? newPage : null),
-        };
-        await queueCommand.execute(interaction);
-      } else if (interaction.customId.startsWith("queue_next_")) {
-        const currentPage = parseInt(interaction.customId.split("_")[2]);
-        const newPage = currentPage + 1;
+          // Re-run queue command with new page
+          const queueCommand = interaction.client.commands.get("queue");
+          interaction.options = {
+            getInteger: (optionName) => (optionName === "page" ? newPage : null),
+          };
+          await queueCommand.execute(interaction);
+        } else if (interaction.customId.startsWith("queue_next_")) {
+          const currentPage = parseInt(interaction.customId.split("_")[2]);
+          const newPage = currentPage + 1;
 
-        // Re-run queue command with new page
-        const queueCommand = interaction.client.commands.get("queue");
-        interaction.options = {
-          getInteger: (optionName) => (optionName === "page" ? newPage : null),
-        };
-        await queueCommand.execute(interaction);
-      } else if (interaction.customId === "queue_refresh") {
-        // Re-run queue command with current page
-        const queueCommand = interaction.client.commands.get("queue");
-        interaction.options = {
-          getInteger: () => null,
-        };
-        await queueCommand.execute(interaction);
+          // Re-run queue command with new page
+          const queueCommand = interaction.client.commands.get("queue");
+          interaction.options = {
+            getInteger: (optionName) => (optionName === "page" ? newPage : null),
+          };
+          await queueCommand.execute(interaction);
+        } else if (interaction.customId === "queue_refresh") {
+          // Re-run queue command with current page
+          const queueCommand = interaction.client.commands.get("queue");
+          interaction.options = {
+            getInteger: () => null,
+          };
+          await queueCommand.execute(interaction);
+        }
+      } catch (queueError) {
+        console.error('Queue navigation error:', queueError);
+        
+        // Handle "Unknown interaction" errors gracefully
+        if (queueError.code === 10062) {
+          console.log('Queue interaction token expired, ignoring...');
+          return;
+        }
+        
+        try {
+          if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({
+              content: "There was an error updating the queue!",
+              flags: 64,
+            });
+          }
+        } catch (replyError) {
+          console.error('Failed to send queue error message:', replyError);
+        }
       }
     }
 
@@ -120,106 +152,127 @@ client.on("interactionCreate", async (interaction) => {
       if (!queue) {
         return interaction.reply({
           content: "No active music session!",
-          ephemeral: true,
-        });
+          flags: 64, // Use flags instead of ephemeral
+        }).catch(console.error);
       }
 
       const voiceChannel = interaction.member.voice.channel;
       if (!voiceChannel || voiceChannel.id !== queue.voiceChannel?.id) {
         return interaction.reply({
           content: "You need to be in the same voice channel as the bot!",
-          ephemeral: true,
-        });
+          flags: 64, // Use flags instead of ephemeral
+        }).catch(console.error);
       }
 
-      switch (interaction.customId) {
-        case "music_pause":
-          const pauseCommand = interaction.client.commands.get("pause");
-          await pauseCommand.execute(interaction);
-          break;
+      try {
+        switch (interaction.customId) {
+          case "music_pause":
+            const pauseCommand = interaction.client.commands.get("pause");
+            await pauseCommand.execute(interaction);
+            break;
 
-        case "music_skip":
-          const skipCommand = interaction.client.commands.get("skip");
-          await skipCommand.execute(interaction);
-          break;
+          case "music_skip":
+            const skipCommand = interaction.client.commands.get("skip");
+            await skipCommand.execute(interaction);
+            break;
 
-        case "music_stop":
-          const stopCommand = interaction.client.commands.get("stop");
-          await stopCommand.execute(interaction);
-          break;
+          case "music_stop":
+            const stopCommand = interaction.client.commands.get("stop");
+            await stopCommand.execute(interaction);
+            break;
 
-        case "music_shuffle":
-          const shuffleCommand = interaction.client.commands.get("shuffle");
-          await shuffleCommand.execute(interaction);
-          break;
+          case "music_shuffle":
+            const shuffleCommand = interaction.client.commands.get("shuffle");
+            await shuffleCommand.execute(interaction);
+            break;
 
-        case "music_loop":
-          // Cycle through loop modes
-          const currentLoop = queue.loop;
-          const nextLoop =
-            currentLoop === "off"
-              ? "song"
-              : currentLoop === "song"
-              ? "queue"
-              : "off";
-          queue.setLoop(nextLoop);
+          case "music_loop":
+            // Cycle through loop modes
+            const currentLoop = queue.loop;
+            const nextLoop =
+              currentLoop === "off"
+                ? "song"
+                : currentLoop === "song"
+                ? "queue"
+                : "off";
+            queue.setLoop(nextLoop);
 
-          const loopEmojis = { off: "➡️", song: "🔂", queue: "🔁" };
-          const loopNames = { off: "Off", song: "Song", queue: "Queue" };
+            const loopEmojis = { off: "➡️", song: "🔂", queue: "🔁" };
+            const loopNames = { off: "Off", song: "Song", queue: "Queue" };
 
-          await interaction.reply({
-            content: `${loopEmojis[nextLoop]} Loop mode: **${loopNames[nextLoop]}**`,
-            ephemeral: true,
-          });
-          break;
+            await interaction.reply({
+              content: `${loopEmojis[nextLoop]} Loop mode: **${loopNames[nextLoop]}**`,
+              flags: 64, // Use flags instead of ephemeral
+            });
+            break;
 
-        case "music_queue":
-          const queueCommand = interaction.client.commands.get("queue");
-          interaction.options = {
-            getInteger: () => null,
-          };
-          await queueCommand.execute(interaction);
-          break;
-          
-        case "music_volume_up":
-          const currentVolumeUp = queue.getVolumePercent();
-          const newVolumeUp = Math.min(100, currentVolumeUp + 10);
-          queue.setVolume(newVolumeUp);
-          
-          if (queue.player && queue.player.state.resource) {
-            queue.player.state.resource.volume?.setVolume(queue.volume);
+          case "music_queue":
+            const queueCommand = interaction.client.commands.get("queue");
+            interaction.options = {
+              getInteger: () => null,
+            };
+            await queueCommand.execute(interaction);
+            break;
+            
+          case "music_volume_up":
+            const currentVolumeUp = queue.getVolumePercent();
+            const newVolumeUp = Math.min(100, currentVolumeUp + 10);
+            queue.setVolume(newVolumeUp);
+            
+            if (queue.player && queue.player.state.resource) {
+              queue.player.state.resource.volume?.setVolume(queue.volume);
+            }
+            
+            await interaction.reply({ 
+              content: `🔊 Volume increased to **${newVolumeUp}%**`,
+              flags: 64 // Use flags instead of ephemeral
+            });
+            break;
+            
+          case "music_volume_down":
+            const currentVolumeDown = queue.getVolumePercent();
+            const newVolumeDown = Math.max(0, currentVolumeDown - 10);
+            queue.setVolume(newVolumeDown);
+            
+            if (queue.player && queue.player.state.resource) {
+              queue.player.state.resource.volume?.setVolume(queue.volume);
+            }
+            
+            await interaction.reply({ 
+              content: `🔉 Volume decreased to **${newVolumeDown}%**`,
+              flags: 64 // Use flags instead of ephemeral
+            });
+            break;
+            
+          case "music_refresh":
+            const controlsCommand = interaction.client.commands.get("controls");
+            await controlsCommand.execute(interaction);
+            break;
+            
+          case "music_controls_panel":
+            const controlsPanelCommand = interaction.client.commands.get("controls");
+            await controlsPanelCommand.execute(interaction);
+            break;
+        }
+      } catch (buttonError) {
+        console.error('Button interaction error:', buttonError);
+        
+        // Handle "Unknown interaction" errors gracefully
+        if (buttonError.code === 10062) {
+          console.log('Button interaction token expired, ignoring...');
+          return;
+        }
+        
+        try {
+          if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({
+              content: "There was an error processing your request!",
+              flags: 64,
+            });
           }
-          
-          await interaction.reply({ 
-            content: `🔊 Volume increased to **${newVolumeUp}%**`,
-            ephemeral: true 
-          });
-          break;
-          
-        case "music_volume_down":
-          const currentVolumeDown = queue.getVolumePercent();
-          const newVolumeDown = Math.max(0, currentVolumeDown - 10);
-          queue.setVolume(newVolumeDown);
-          
-          if (queue.player && queue.player.state.resource) {
-            queue.player.state.resource.volume?.setVolume(queue.volume);
-          }
-          
-          await interaction.reply({ 
-            content: `🔉 Volume decreased to **${newVolumeDown}%**`,
-            ephemeral: true 
-          });
-          break;
-          
-        case "music_refresh":
-          const controlsCommand = interaction.client.commands.get("controls");
-          await controlsCommand.execute(interaction);
-          break;
-          
-        case "music_controls_panel":
-          const controlsPanelCommand = interaction.client.commands.get("controls");
-          await controlsPanelCommand.execute(interaction);
-          break;
+        } catch (replyError) {
+          console.error('Failed to send button error message:', replyError);
+        }
       }
     }
   }
@@ -270,6 +323,21 @@ client.on("voiceStateUpdate", (oldState) => {
       }, 300000); // 5 minutes
     }
   }
+});
+
+// Global error handlers to prevent crashes
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit the process, just log the error
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // Don't exit the process, just log the error
+});
+
+client.on('error', (error) => {
+  console.error('Discord client error:', error);
 });
 
 client.login(config.token);
