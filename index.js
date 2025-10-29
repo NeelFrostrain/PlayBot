@@ -215,6 +215,11 @@ client.on("interactionCreate", async (interaction) => {
           const controlsCommand = interaction.client.commands.get("controls");
           await controlsCommand.execute(interaction);
           break;
+          
+        case "music_controls_panel":
+          const controlsPanelCommand = interaction.client.commands.get("controls");
+          await controlsPanelCommand.execute(interaction);
+          break;
       }
     }
   }

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const {
   joinVoiceChannel,
   createAudioPlayer,
@@ -193,12 +193,32 @@ module.exports = {
           embed.setURL(song.url);
         }
 
+        // Create quick action buttons for queued song
+        const queueActionRow = new ActionRowBuilder()
+          .addComponents(
+            new ButtonBuilder()
+              .setCustomId('music_controls_panel')
+              .setLabel('Control Panel')
+              .setEmoji('🎛️')
+              .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+              .setCustomId('music_queue')
+              .setLabel('View Queue')
+              .setEmoji('📋')
+              .setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder()
+              .setLabel('YouTube')
+              .setEmoji('🎬')
+              .setStyle(ButtonStyle.Link)
+              .setURL(song.url || 'https://youtube.com')
+          );
+
         // Start background downloading if not already active
         if (!backgroundDownloader.isDownloading(queue.guildId)) {
           backgroundDownloader.startDownloading(queue);
         }
 
-        return interaction.editReply({ embeds: [embed] });
+        return interaction.editReply({ embeds: [embed], components: [queueActionRow] });
       }
 
       // Start background downloading for future songs
@@ -387,24 +407,54 @@ async function playNextSong(queue, interaction = null) {
       nowPlayingEmbed.setURL(song.url);
     }
 
+    // Create Music Control Panel button
+    const controlPanelRow = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId('music_controls_panel')
+          .setLabel('Music Control Panel')
+          .setEmoji('🎛️')
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId('music_pause')
+          .setLabel('Pause')
+          .setEmoji('⏸️')
+          .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+          .setCustomId('music_skip')
+          .setLabel('Skip')
+          .setEmoji('⏭️')
+          .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+          .setCustomId('music_queue')
+          .setLabel('Queue')
+          .setEmoji('📋')
+          .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+          .setLabel('YouTube')
+          .setEmoji('🎬')
+          .setStyle(ButtonStyle.Link)
+          .setURL(song.url || 'https://youtube.com')
+      );
+
     // Send now playing message
     if (progressMessage) {
-      await progressMessage.edit({ embeds: [nowPlayingEmbed] }).catch(() => {});
+      await progressMessage.edit({ embeds: [nowPlayingEmbed], components: [controlPanelRow] }).catch(() => {});
     } else if (interaction) {
       try {
-        await interaction.editReply({ embeds: [nowPlayingEmbed] });
+        await interaction.editReply({ embeds: [nowPlayingEmbed], components: [controlPanelRow] });
       } catch (error) {
         // If interaction fails, send to text channel
         if (queue.textChannel) {
           queue.textChannel
-            .send({ embeds: [nowPlayingEmbed] })
+            .send({ embeds: [nowPlayingEmbed], components: [controlPanelRow] })
             .catch(console.error);
         }
       }
     } else if (queue.textChannel) {
       // Send to text channel if no interaction
       queue.textChannel
-        .send({ embeds: [nowPlayingEmbed] })
+        .send({ embeds: [nowPlayingEmbed], components: [controlPanelRow] })
         .catch(console.error);
     }
   } catch (error) {
