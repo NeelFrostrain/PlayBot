@@ -53,7 +53,8 @@ A Discord music bot built with Discord.js v14 that supports playing music from Y
 - `/queue` - Show the current music queue with pagination
 - `/skip` - Skip the current song
 - `/stop` - Stop music and clear queue
-- `/nowplaying` - Show currently playing song
+- `/nowplaying` - Show currently playing song with thumbnail
+- `/247 <on/off/status>` - Toggle 24/7 mode (keeps bot in voice channel)
 
 ### Advanced Queue Management
 - `/shuffle` - Shuffle the current queue
@@ -78,7 +79,7 @@ A Discord music bot built with Discord.js v14 that supports playing music from Y
 
 - Node.js 16.9.0 or higher
 - Discord bot token and permissions
-- FFmpeg (included via ffmpeg-static package)
+- FFmpeg (system installation required)
 - **yt-dlp** (optional, for enhanced reliability) - See [YT-DLP-SETUP.md](YT-DLP-SETUP.md)
 
 ## Bot Permissions
@@ -107,7 +108,7 @@ Make sure your bot has the following permissions:
 - **yt-dlp is required** - see installation instructions below
 - Downloaded files are **automatically deleted** after playing to save space
 - Playlists are limited to 50 songs for performance
-- FFmpeg is automatically included via the ffmpeg-static package
+- FFmpeg must be installed on your system
 
 ## Setup yt-dlp (Required)
 

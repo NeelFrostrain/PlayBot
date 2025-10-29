@@ -2,7 +2,7 @@
 
 ## Common Audio Issues and Solutions
 
-### Issue: "Cannot find module '@discordjs/opus'"
+### Issue: "Cannot find module 'opusscript'"
 
 **Symptoms:**
 - Bot fails to play audio
@@ -11,7 +11,7 @@
 
 **Solution:**
 ```bash
-npm install @discordjs/opus
+npm install opusscript
 ```
 
 **Alternative Solutions:**
@@ -26,7 +26,7 @@ npm install node-opus
 
 # Option 3: Reinstall voice dependencies
 npm uninstall @discordjs/voice
-npm install @discordjs/voice @discordjs/opus
+npm install @discordjs/voice opusscript
 ```
 
 ### Issue: "Error message too long for embed"
@@ -67,10 +67,13 @@ This is automatically handled in the latest version by truncating long error mes
 - Cannot convert audio formats
 
 **Solution:**
-FFMPEG is included automatically via `ffmpeg-static` package. If issues persist:
+FFmpeg must be installed on your system. Install it from https://ffmpeg.org/download.html or use a package manager:
 
 ```bash
-npm install ffmpeg-static --force
+# Windows (using chocolatey)
+choco install ffmpeg
+
+# Or download from https://ffmpeg.org/download.html
 ```
 
 ### Issue: Voice connection problems
@@ -127,9 +130,9 @@ If audio issues persist:
 
 Required for audio functionality:
 - `@discordjs/voice` - Voice connection handling
-- `@discordjs/opus` - Audio encoding/decoding
-- `ffmpeg-static` - Audio processing
+- `opusscript` - Audio encoding/decoding
 - `libsodium-wrappers` - Encryption for voice data
+- FFmpeg (system installation) - Audio processing
 
 Optional alternatives:
 - `opusscript` - Pure JavaScript Opus implementation

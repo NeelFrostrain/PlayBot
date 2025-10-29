@@ -27,8 +27,11 @@ module.exports = {
         const currentPage = Math.min(Math.max(1, page), totalPages || 1);
 
         const embed = new EmbedBuilder()
-            .setTitle('🎵 Music Queue')
-            .setColor('#0099ff');
+            .setAuthor({ 
+                name: '🎵 Music Queue', 
+                iconURL: 'https://cdn.discordapp.com/emojis/742094927403065374.png' 
+            })
+            .setColor('#1DB954');
 
         let description = '';
         
@@ -36,16 +39,16 @@ module.exports = {
         const currentSong = queue.getCurrentSong();
         if (currentSong && queue.playing) {
             const loopIcon = queue.loop === 'song' ? '🔂' : queue.loop === 'queue' ? '🔁' : '';
-            const pauseIcon = queue.paused ? '⏸️' : '▶️';
-            description += `${pauseIcon} **Now Playing:** ${loopIcon}\n`;
-            description += `**${currentSong.title}**\n`;
-            description += `*Duration: ${formatDuration(currentSong.duration)} | Requested by: ${currentSong.requestedBy.username}*\n\n`;
+            const pauseIcon = queue.paused ? '⏸️' : '🎵';
+            description += `${pauseIcon} **Now Playing** ${loopIcon}\n`;
+            description += `🎶 **${currentSong.title}**\n`;
+            description += `⏱️ ${formatDuration(currentSong.duration)} • 👤 ${currentSong.requestedBy.username}\n\n`;
         }
 
         // Show upcoming songs
         const upcomingSongs = queue.getUpcoming();
         if (upcomingSongs.length > 0) {
-            description += '**Up Next:**\n';
+            description += '📋 **Up Next:**\n';
             
             const startIndex = (currentPage - 1) * songsPerPage;
             const endIndex = Math.min(startIndex + songsPerPage, upcomingSongs.length);
@@ -53,26 +56,29 @@ module.exports = {
             for (let i = startIndex; i < endIndex; i++) {
                 const song = upcomingSongs[i];
                 const position = i + 2; // +2 because index 0 is current song, and we want 1-based numbering
-                description += `\`${position.toString().padStart(2, '0')}.\` **${song.title}**\n`;
-                description += `     *${formatDuration(song.duration)} | ${song.requestedBy.username}*\n`;
+                description += `\`${position.toString().padStart(2, '0')}.\` 🎵 **${song.title}**\n`;
+                description += `      ⏱️ ${formatDuration(song.duration)} • 👤 ${song.requestedBy.username}\n`;
             }
             
             if (upcomingSongs.length > endIndex) {
-                description += `\n*... and ${upcomingSongs.length - endIndex} more songs*`;
+                description += `\n✨ *... and ${upcomingSongs.length - endIndex} more songs*`;
             }
         }
 
         // Queue statistics
         const totalDuration = queue.getTotalDuration();
         const queueInfo = [
-            `**Total Songs:** ${queue.getQueueSize()}`,
-            `**Total Duration:** ${formatDuration(totalDuration)}`,
-            `**Loop Mode:** ${queue.loop === 'off' ? 'Off' : queue.loop === 'song' ? 'Song' : 'Queue'}`,
-            totalPages > 1 ? `**Page:** ${currentPage}/${totalPages}` : ''
-        ].filter(Boolean).join(' | ');
+            `🎵 ${queue.getQueueSize()} songs`,
+            `⏱️ ${formatDuration(totalDuration)}`,
+            `🔄 ${queue.loop === 'off' ? 'No Loop' : queue.loop === 'song' ? 'Song Loop' : 'Queue Loop'}`,
+            totalPages > 1 ? `📄 Page ${currentPage}/${totalPages}` : ''
+        ].filter(Boolean).join(' • ');
 
         embed.setDescription(description);
-        embed.setFooter({ text: queueInfo });
+        embed.setFooter({ 
+            text: queueInfo,
+            iconURL: interaction.user.displayAvatarURL({ size: 32 })
+        });
 
         // Add navigation buttons if multiple pages
         const components = [];

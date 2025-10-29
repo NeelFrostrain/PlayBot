@@ -18,26 +18,38 @@ module.exports = {
         }
 
         const currentSong = queue.songs[0];
-        const statusIcon = queue.paused ? '⏸️' : '▶️';
+        const statusIcon = queue.paused ? '⏸️' : '🎵';
         const loopIcon = queue.loop === 'song' ? '🔂' : queue.loop === 'queue' ? '🔁' : '';
         const volumeBar = createVolumeBar(queue.getVolumePercent());
+        const progressBar = createProgressBar(0, currentSong.duration); // You can add actual progress tracking later
         
+        // Create a more stylish embed
         const embed = new EmbedBuilder()
-            .setTitle(`${statusIcon} Now Playing ${loopIcon}`)
-            .setDescription(`**${currentSong.title}**`)
-            .setColor(queue.paused ? '#ff9900' : '#00ff00')
-            .addFields(
-                { name: 'Duration', value: formatDuration(currentSong.duration), inline: true },
-                { name: 'Requested by', value: currentSong.requestedBy.toString(), inline: true },
-                { name: 'Uploader', value: currentSong.uploader || 'Unknown', inline: true },
-                { name: 'Volume', value: volumeBar, inline: false },
-                { name: 'Loop Mode', value: queue.loop === 'off' ? 'Off' : queue.loop === 'song' ? 'Song' : 'Queue', inline: true },
-                { name: 'Queue Position', value: `1 of ${queue.songs.length}`, inline: true },
-                { name: 'Status', value: queue.paused ? 'Paused' : 'Playing', inline: true }
-            );
+            .setAuthor({ 
+                name: `${statusIcon} Now Playing ${loopIcon}`, 
+                iconURL: 'https://cdn.discordapp.com/emojis/741605543046807626.gif' 
+            })
+            .setTitle(currentSong.title)
+            .setDescription(`
+                ${progressBar}
+                
+                **🎤 Artist:** ${currentSong.uploader || 'Unknown'}
+                **⏱️ Duration:** ${formatDuration(currentSong.duration)}
+                **👤 Requested by:** ${currentSong.requestedBy}
+                
+                **🔊 Volume:** ${volumeBar}
+                **🔄 Loop:** ${queue.loop === 'off' ? 'Off' : queue.loop === 'song' ? 'Song' : 'Queue'}
+                **📋 Queue:** ${queue.songs.length} song${queue.songs.length !== 1 ? 's' : ''}
+            `)
+            .setColor(queue.paused ? '#FFA500' : '#1DB954')
+            .setFooter({ 
+                text: `Added ${getTimeAgo(currentSong.addedAt)} • ${queue.paused ? 'Paused' : 'Playing'}`,
+                iconURL: currentSong.requestedBy.displayAvatarURL({ size: 32 })
+            })
+            .setTimestamp();
 
         if (currentSong.thumbnail) {
-            embed.setThumbnail(currentSong.thumbnail);
+            embed.setImage(currentSong.thumbnail);
         }
 
         // Add URL if available
@@ -45,21 +57,42 @@ module.exports = {
             embed.setURL(currentSong.url);
         }
 
-        embed.setTimestamp(currentSong.addedAt);
-        embed.setFooter({ text: 'Added to queue' });
-
-        // Add quick control buttons
-        const row = new ActionRowBuilder()
+        // Create stylish control buttons
+        const row1 = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId('music_pause')
                     .setLabel(queue.paused ? 'Resume' : 'Pause')
                     .setEmoji(queue.paused ? '▶️' : '⏸️')
-                    .setStyle(ButtonStyle.Primary),
+                    .setStyle(queue.paused ? ButtonStyle.Success : ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setCustomId('music_skip')
                     .setLabel('Skip')
                     .setEmoji('⏭️')
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId('music_stop')
+                    .setLabel('Stop')
+                    .setEmoji('⏹️')
+                    .setStyle(ButtonStyle.Danger),
+                new ButtonBuilder()
+                    .setCustomId('music_shuffle')
+                    .setLabel('Shuffle')
+                    .setEmoji('�')
+                    .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId('music_loop')
+                    .setLabel('Loop')
+                    .setEmoji(queue.loop === 'off' ? '➡️' : queue.loop === 'song' ? '🔂' : '🔁')
+                    .setStyle(queue.loop === 'off' ? ButtonStyle.Secondary : ButtonStyle.Success)
+            );
+
+        const row2 = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('music_volume_down')
+                    .setLabel('Vol-')
+                    .setEmoji('🔉')
                     .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setCustomId('music_volume_up')
@@ -67,13 +100,23 @@ module.exports = {
                     .setEmoji('🔊')
                     .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
-                    .setCustomId('music_volume_down')
-                    .setLabel('Vol-')
-                    .setEmoji('🔉')
-                    .setStyle(ButtonStyle.Secondary)
+                    .setCustomId('music_queue')
+                    .setLabel('Queue')
+                    .setEmoji('📋')
+                    .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setCustomId('music_refresh')
+                    .setLabel('Refresh')
+                    .setEmoji('🔄')
+                    .setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder()
+                    .setLabel('YouTube')
+                    .setEmoji('🎬')
+                    .setStyle(ButtonStyle.Link)
+                    .setURL(currentSong.url || 'https://youtube.com')
             );
 
-        return interaction.reply({ embeds: [embed], components: [row] });
+        return interaction.reply({ embeds: [embed], components: [row1, row2] });
     },
 };
 
@@ -90,18 +133,60 @@ function formatDuration(seconds) {
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
 }
 
-function createVolumeBar(volume, length = 15) {
+function createVolumeBar(volume, length = 12) {
     const filled = Math.round((volume / 100) * length);
     const empty = length - filled;
     
     let bar = '';
     for (let i = 0; i < length; i++) {
         if (i < filled) {
-            bar += '█';
+            bar += '🟩';
         } else {
-            bar += '░';
+            bar += '⬜';
         }
     }
     
-    return `${bar} ${volume}%`;
+    return `${bar} **${volume}%**`;
+}
+
+function createProgressBar(currentTime = 0, totalTime, length = 20) {
+    if (!totalTime || totalTime === 0) {
+        return '🎵 ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ 🎵';
+    }
+    
+    const progress = Math.min(currentTime / totalTime, 1);
+    const filled = Math.round(progress * length);
+    const empty = length - filled;
+    
+    let bar = '🎵 ';
+    for (let i = 0; i < length; i++) {
+        if (i < filled) {
+            bar += '▬';
+        } else if (i === filled) {
+            bar += '🔘';
+        } else {
+            bar += '▬';
+        }
+    }
+    bar += ' 🎵';
+    
+    return bar;
+}
+
+function getTimeAgo(date) {
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+    
+    if (diffInSeconds < 60) {
+        return 'just now';
+    } else if (diffInSeconds < 3600) {
+        const minutes = Math.floor(diffInSeconds / 60);
+        return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+    } else if (diffInSeconds < 86400) {
+        const hours = Math.floor(diffInSeconds / 3600);
+        return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+    } else {
+        const days = Math.floor(diffInSeconds / 86400);
+        return `${days} day${days !== 1 ? 's' : ''} ago`;
+    }
 }

@@ -3,6 +3,7 @@
 ## Version 2.0.0 - Enhanced yt-dlp Integration
 
 ### 🔧 **Bug Fixes**
+
 - ✅ **Fixed interaction error**: Resolved `Cannot read properties of undefined (reading 'editReply')` error
 - ✅ **Made interaction parameter optional** in `playNextSong` functions
 - ✅ **Improved error handling** for different execution contexts
@@ -10,13 +11,16 @@
 - ✅ **Enhanced progress tracking** with fallback to text channel
 
 ### 🎵 **New Features**
+
 - ✅ **Volume Control System**
+
   - `/volume [level]` command (0-100%)
   - Volume up/down buttons in control panel
   - Visual volume bars in embeds
   - Real-time volume adjustment during playback
 
 - ✅ **Enhanced Control Panel**
+
   - Interactive buttons for all controls
   - Volume controls integrated
   - Real-time status updates
@@ -30,6 +34,7 @@
   - Thumbnails and metadata
 
 ### 📥 **Download Status Improvements**
+
 - ✅ **Dynamic progress bars** with color changes
 - ✅ **Status messages** (Analyzing → Downloading → Processing → Ready)
 - ✅ **File size information** when available
@@ -37,12 +42,14 @@
 - ✅ **Fallback to text channel** when interaction unavailable
 
 ### 🎛️ **Control Enhancements**
+
 - ✅ **Button Controls**: Pause/Resume, Skip, Stop, Volume, Shuffle, Loop
 - ✅ **Voice Channel Validation** with helpful error messages
 - ✅ **yt-dlp Installation Guidance** with platform-specific instructions
 - ✅ **Quick Control Buttons** on now playing display
 
 ### 🔄 **System Improvements**
+
 - ✅ **Auto File Deletion** after playing to save space
 - ✅ **Better Error Messages** with specific solutions
 - ✅ **Improved Search** with proper URL construction
@@ -50,6 +57,7 @@
 - ✅ **Setup Verification Script** (`npm run setup`)
 
 ### 📋 **Commands Updated**
+
 - `/play` - Enhanced with volume control and better error handling
 - `/playlist` - Improved with progress tracking and error embeds
 - `/volume` - New command for volume control
@@ -60,12 +68,14 @@
 - All commands now use rich embeds
 
 ### 🎨 **Visual Improvements**
+
 - **Progress Bars**: `████████░░░░░░░░░░░░ 45.2%`
 - **Volume Bars**: `███████░░░░░░░░ 50%`
 - **Status Icons**: ▶️ Playing, ⏸️ Paused, 🔊 Volume, 📥 Downloading
 - **Color Coding**: 🟢 Success, 🔴 Error, 🟠 Warning, 🔵 Info
 
 ### 🛠️ **Technical Changes**
+
 - Made `interaction` parameter optional in playback functions
 - Added fallback message handling for different contexts
 - Improved error propagation and handling
@@ -73,11 +83,13 @@
 - Better resource management with volume control
 
 ### 📦 **Dependencies**
+
 - Removed unused packages: `ytdl-core`, `yt-search`, `play-dl`, `node-fetch`
 - Kept essential packages for yt-dlp integration
 - Added volume control support to audio resources
 
 ### 🚀 **Performance**
+
 - Reduced package size by removing unused dependencies
 - Improved error recovery and fallback mechanisms
 - Better memory management with auto file deletion

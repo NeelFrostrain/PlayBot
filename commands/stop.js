@@ -33,12 +33,17 @@ module.exports = {
 
         queue.songs = [];
         queue.player.stop();
-        queue.connection.destroy();
+        queue.playing = false;
         
         // Stop background downloading
         backgroundDownloader.stopDownloading(interaction.guildId);
         
-        interaction.client.queues.delete(interaction.guildId);
+        // Check 24/7 mode before destroying connection
+        const guildSettings = interaction.client.settings247?.get(interaction.guildId);
+        if (!guildSettings || !guildSettings.enabled) {
+            queue.connection.destroy();
+            interaction.client.queues.delete(interaction.guildId);
+        }
 
         const embed = new EmbedBuilder()
             .setTitle('⏹️ Music Stopped')

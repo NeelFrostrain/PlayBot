@@ -25,14 +25,11 @@ async function checkSetup() {
     require("fs-extra");
     console.log("✅ fs-extra");
 
-    require("ffmpeg-static");
-    console.log("✅ ffmpeg-static");
-
     require("libsodium-wrappers");
     console.log("✅ libsodium-wrappers");
     
-    require("@discordjs/opus");
-    console.log("✅ @discordjs/opus");
+    require("opusscript");
+    console.log("✅ opusscript");
   } catch (error) {
     console.log(`❌ Missing dependency: ${error.message}`);
     allGood = false;

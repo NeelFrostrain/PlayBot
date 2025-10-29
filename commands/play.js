@@ -167,29 +167,31 @@ module.exports = {
       } else {
         const position = skipToSong ? "next" : `#${queue.songs.length}`;
         const embed = new EmbedBuilder()
-          .setTitle("✅ Added to Queue")
-          .setDescription(`**${song.title}**`)
-          .setColor("#0099ff")
-          .addFields(
-            { name: "Position", value: position, inline: true },
-            {
-              name: "Duration",
-              value: ytdlp.formatDuration(song.duration),
-              inline: true,
-            },
-            {
-              name: "Requested by",
-              value: song.requestedBy.toString(),
-              inline: true,
-            },
-            {
-              name: "Uploader",
-              value: song.uploader || "Unknown",
-              inline: true,
-            }
-          );
+          .setAuthor({ 
+            name: "✅ Added to Queue", 
+            iconURL: 'https://cdn.discordapp.com/emojis/735119204181221386.png' 
+          })
+          .setTitle(song.title)
+          .setDescription(`
+            **📍 Position:** ${position}
+            **🎤 Artist:** ${song.uploader || "Unknown"}
+            **⏱️ Duration:** ${ytdlp.formatDuration(song.duration)}
+            **👤 Requested by:** ${song.requestedBy}
+          `)
+          .setColor("#00D4FF")
+          .setFooter({ 
+            text: `Queue length: ${queue.songs.length} songs`,
+            iconURL: song.requestedBy.displayAvatarURL({ size: 32 })
+          })
+          .setTimestamp();
 
-        if (song.thumbnail) embed.setThumbnail(song.thumbnail);
+        if (song.thumbnail) {
+          embed.setThumbnail(song.thumbnail);
+        }
+        
+        if (song.url) {
+          embed.setURL(song.url);
+        }
 
         // Start background downloading if not already active
         if (!backgroundDownloader.isDownloading(queue.guildId)) {
@@ -357,29 +359,33 @@ async function playNextSong(queue, interaction = null) {
 
     // Update message to show now playing
     const nowPlayingEmbed = new EmbedBuilder()
-      .setTitle("🎵 Now Playing")
-      .setDescription(`**${song.title}**`)
-      .setColor("#00ff00")
-      .addFields(
-        {
-          name: "Duration",
-          value: ytdlp.formatDuration(song.duration),
-          inline: true,
-        },
-        {
-          name: "Requested by",
-          value: song.requestedBy.username,
-          inline: true,
-        },
-        { name: "Uploader", value: song.uploader || "Unknown", inline: true },
-        {
-          name: "Source",
-          value: downloadResult.cached ? "💾 Cached" : "📥 Downloaded",
-          inline: true,
-        }
-      );
+      .setAuthor({ 
+        name: "🎵 Now Playing", 
+        iconURL: 'https://cdn.discordapp.com/emojis/741605543046807626.gif' 
+      })
+      .setTitle(song.title)
+      .setDescription(`
+        🎵 ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ 🎵
+        
+        **🎤 Artist:** ${song.uploader || "Unknown"}
+        **⏱️ Duration:** ${ytdlp.formatDuration(song.duration)}
+        **👤 Requested by:** ${song.requestedBy}
+        **📥 Source:** ${downloadResult.cached ? "💾 Cached" : "📥 Downloaded"}
+      `)
+      .setColor("#1DB954")
+      .setFooter({ 
+        text: `Added to queue • Playing now`,
+        iconURL: song.requestedBy.displayAvatarURL({ size: 32 })
+      })
+      .setTimestamp();
 
-    if (song.thumbnail) nowPlayingEmbed.setThumbnail(song.thumbnail);
+    if (song.thumbnail) {
+      nowPlayingEmbed.setImage(song.thumbnail);
+    }
+    
+    if (song.url) {
+      nowPlayingEmbed.setURL(song.url);
+    }
 
     // Send now playing message
     if (progressMessage) {
@@ -457,6 +463,8 @@ async function handleSongEnd(queue, client) {
       playNextSong(queue, null);
     } else {
       queue.playing = false;
+      // Check 24/7 mode before disconnecting
+      handle247Mode(queue, client);
     }
   } else {
     // Normal progression
@@ -465,8 +473,29 @@ async function handleSongEnd(queue, client) {
       playNextSong(queue, null);
     } else {
       queue.playing = false;
+      // Check 24/7 mode before disconnecting
+      handle247Mode(queue, client);
     }
   }
+}
+
+function handle247Mode(queue, client) {
+  if (!client || !client.settings247) return;
+  
+  const guildSettings = client.settings247.get(queue.guildId);
+  
+  // If 24/7 mode is disabled or not set, disconnect after a delay
+  if (!guildSettings || !guildSettings.enabled) {
+    setTimeout(() => {
+      if (queue && queue.connection && queue.songs.length === 0 && !queue.playing) {
+        queue.connection.destroy();
+        if (client.queues) {
+          client.queues.delete(queue.guildId);
+        }
+      }
+    }, 30000); // Wait 30 seconds before disconnecting
+  }
+  // If 24/7 mode is enabled, keep the connection alive
 }
 
 function formatDuration(seconds) {

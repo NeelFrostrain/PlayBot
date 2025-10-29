@@ -17,6 +17,7 @@ const client = new Client({
 // Collections for commands and music queues
 client.commands = new Collection();
 client.queues = new Collection();
+client.settings247 = new Collection();
 
 // MusicQueue class is imported in individual command files as needed
 
@@ -222,6 +223,7 @@ client.on("interactionCreate", async (interaction) => {
 // Voice state update handler for cleanup
 client.on("voiceStateUpdate", (oldState) => {
   const queue = client.queues.get(oldState.guild.id);
+  const guildSettings = client.settings247.get(oldState.guild.id);
 
   if (queue && oldState.channelId === queue.voiceChannel?.id) {
     const members = oldState.channel?.members.filter(
@@ -229,12 +231,21 @@ client.on("voiceStateUpdate", (oldState) => {
     );
 
     if (members?.size === 0) {
+      // Check if 24/7 mode is enabled
+      if (guildSettings && guildSettings.enabled) {
+        console.log(`24/7 mode active in ${oldState.guild.name}, staying connected`);
+        return; // Don't disconnect in 24/7 mode
+      }
+
       // No users left in voice channel, cleanup after 5 minutes
       setTimeout(() => {
         const currentQueue = client.queues.get(oldState.guild.id);
+        const currentSettings = client.settings247.get(oldState.guild.id);
+        
         if (
           currentQueue &&
-          currentQueue.voiceChannel?.id === oldState.channelId
+          currentQueue.voiceChannel?.id === oldState.channelId &&
+          (!currentSettings || !currentSettings.enabled)
         ) {
           const stillEmpty =
             oldState.channel?.members.filter((member) => !member.user.bot)
