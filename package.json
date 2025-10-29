@@ -7,7 +7,8 @@
     "start": "node index.js",
     "dev": "node index.js",
     "setup": "node check-setup.js",
-    "deploy": "node deploy-commands.js"
+    "deploy": "node deploy-commands.js",
+    "update-ytdlp": "node update-ytdlp.js"
   },
   "dependencies": {
     "@discordjs/voice": "^0.17.0",

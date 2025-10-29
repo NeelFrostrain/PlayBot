@@ -75,11 +75,37 @@ A Discord music bot built with Discord.js v14 that supports playing music from Y
 ### Troubleshooting Commands
 - `/debug <url>` - Debug information for administrators
 
+## Troubleshooting
+
+### YouTube 403 Forbidden Errors
+If you get "HTTP Error 403: Forbidden" when trying to play songs:
+
+1. **Update yt-dlp to the latest version:**
+   ```bash
+   npm run update-ytdlp
+   # or manually:
+   pip install --upgrade yt-dlp
+   ```
+
+2. **Try different videos** - Some videos may be region-blocked or have restrictions
+
+3. **Check yt-dlp directly:**
+   ```bash
+   yt-dlp --version
+   yt-dlp "https://www.youtube.com/watch?v=VIDEO_ID"
+   ```
+
+### For Termux Users
+- Make sure you have the latest version of yt-dlp installed
+- Some videos might not work due to mobile IP restrictions
+- Try using a VPN if available
+
 ## Requirements
 
 - Node.js 16.9.0 or higher
 - Discord bot token and permissions
 - FFmpeg (system installation required)
+- yt-dlp (latest version recommended)
 - **yt-dlp** (optional, for enhanced reliability) - See [YT-DLP-SETUP.md](YT-DLP-SETUP.md)
 
 ## Bot Permissions
